@@ -188,8 +188,8 @@ export function RotatingCubeTraining({ settings, onComplete, onExit }) {
     isValidUnfoldingOfCube(currentQuestion.options[selectedOption], currentQuestion.cube);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8 flex flex-col">
+      <div className="w-full mx-auto space-y-6 flex-1 flex flex-col">
         {/* Header */}
         <div className="flex items-center gap-4">
           {onExit && (
@@ -230,7 +230,7 @@ export function RotatingCubeTraining({ settings, onComplete, onExit }) {
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-center text-lg font-semibold mb-4">{t.selectMatching}</h2>
             <div className="flex justify-center items-center min-h-[280px]">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-24">
                 <RotatingCube3D
                   cube={currentQuestion.cube}
                   difficulty={settings.difficulty}
