@@ -64,7 +64,8 @@ export function RotatingCube3D({ cube, difficulty, size = 180, manualControl = f
     const tick = (now) => {
       const dt = (now - lastTimeRef.current) / 1000;
       lastTimeRef.current = now;
-      setRotY((prev) => (prev + speed * dt) % 360);
+      //setRotY((prev) => (prev + speed * dt) % 360);
+      setRotY((prev) => prev + speed * dt);
       setRotX((prev) => prev + speed * 0.3 * dt * Math.sin(now / 2000));
       rafRef.current = requestAnimationFrame(tick);
     };
