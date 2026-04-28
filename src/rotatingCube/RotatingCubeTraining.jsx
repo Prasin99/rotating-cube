@@ -162,6 +162,8 @@ export function RotatingCubeTraining({ settings, onComplete, onExit }) {
       setShowResult(false);
       setQuestionStartTime(Date.now());
       setQuestionTime(isPracticeMode ? 0 : settings.timePerQuestion);
+      setManualControl(false);
+
     } else {
       onComplete({
         questions,

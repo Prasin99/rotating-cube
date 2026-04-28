@@ -92,7 +92,8 @@ function generateUniqueTransforms(count) {
   while (transforms.length < count && safety < 1000) {
     safety++;
     const layout = randomLayout(), rotation = randomRotation(), mirror = randomMirror();
-    const key = `${layout}-${rotation}-${mirror}`;
+    //const key = `${layout}-${rotation}-${mirror}`;
+    const key = `${layout}`;
     if (!used.has(key)) { used.add(key); transforms.push({ layout, rotation, mirror }); }
   }
   return transforms;

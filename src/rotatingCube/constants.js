@@ -21,8 +21,8 @@ export const ROTATIONS = [0, 90, 180, 270];
 // Was: ['none', 'horizontal', 'vertical']
 export const MIRRORS = ['none'];
 // All active layout IDs (1-9, all 9 templates)
-//export const ALL_LAYOUTS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-export const ALL_LAYOUTS = [1, 2, 3, 4, 6];
+export const ALL_LAYOUTS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+//export const ALL_LAYOUTS = [1, 2, 3, 4, 6];
 export const PER_FACE_ROTATION = {
   1: { front: 0, back: 0, left: 0, right: 0, top: 0,   bottom: 0   },
   2: { front: 0, back: 0, left: 0, right: 0, top: 270, bottom: 90  },
