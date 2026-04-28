@@ -39,7 +39,10 @@ export function RotatingCubeTraining({ settings, onComplete, onExit }) {
   const t = translations[settings.locale] || translations.en;
 
   const [manualControl, setManualControl] = useState(false);
-  const [questions] = useState(() => generateQuestions(settings.questionCount));
+  //const [questions] = useState(() => generateQuestions(settings.questionCount));
+  const [questions] = useState(() =>
+    generateQuestions(settings.questionCount, { forcedLayout: settings.forcedLayout })
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [showResult, setShowResult] = useState(false);
@@ -194,14 +197,14 @@ export function RotatingCubeTraining({ settings, onComplete, onExit }) {
       <div className="w-full mx-auto space-y-6 flex-1 flex flex-col">
         {/* Header */}
         <div className="flex items-center gap-4">
-          {onExit && (
-            <button
-              onClick={onExit}
-              className="px-3 py-1 text-sm text-gray-700 hover:bg-gray-200 rounded"
-            >
-              ← {t.exit}
-            </button>
-          )}
+         {onExit && (
+    <button
+      onClick={onExit}
+      className="text-sm font-mono bg-blue-100 px-3 py-1 rounded hover:bg-blue-200"
+    >
+      {t.exit}
+    </button>
+  )}
           <div className="flex-1 space-y-1">
             <div className="flex justify-between text-sm text-gray-600">
               <span>

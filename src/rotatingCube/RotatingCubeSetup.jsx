@@ -13,8 +13,12 @@ const translations = {
     practice: 'Practice (instant feedback)',
     exam: 'Exam (timed, no feedback)',
     timePerQuestion: 'Time per question (sec)',
+    // locale: 'Language',
+    // start: 'Start',
     locale: 'Language',
     start: 'Start',
+    template: 'Template',
+    templateAny: 'All templates (mixed)',
   },
   de: {
     title: 'Würfel Rotation Training',
@@ -28,8 +32,12 @@ const translations = {
     practice: 'Übung (sofortiges Feedback)',
     exam: 'Prüfung (mit Zeit, ohne Feedback)',
     timePerQuestion: 'Zeit pro Frage (Sek.)',
+    // locale: 'Sprache',
+    // start: 'Starten',
     locale: 'Sprache',
     start: 'Starten',
+    template: 'Schablone',
+    templateAny: 'Alle Schablonen (gemischt)',
   },
 };
 
@@ -39,6 +47,7 @@ export function RotatingCubeSetup({ onStart }) {
   const [mode, setMode] = useState('practice');
   const [timePerQuestion, setTimePerQuestion] = useState(30);
   const [locale, setLocale] = useState('en');
+  const [selectedTemplate, setSelectedTemplate] = useState('any');
 
   const t = translations[locale];
 
@@ -49,6 +58,9 @@ export function RotatingCubeSetup({ onStart }) {
       locale,
       mode,
       timePerQuestion,
+      forcedLayout: mode === 'practice' && selectedTemplate !== 'any'
+        ? Number(selectedTemplate)
+        : null,
     });
   };
 
@@ -131,6 +143,30 @@ export function RotatingCubeSetup({ onStart }) {
               </label>
             </div>
           </div>
+
+          {mode === 'practice' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t.template}
+              </label>
+              <select
+                value={selectedTemplate}
+                onChange={(e) => setSelectedTemplate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded"
+              >
+                <option value="any">{t.templateAny}</option>
+                <option value="1">I — Classic Cross</option>
+                <option value="2">II — Left T Cross</option>
+                <option value="3">III — Right-Center T Cross</option>
+                <option value="4">IV — Offset T</option>
+                <option value="5">V — L-Shape Extended</option>
+                <option value="6">VI — Diagonal Corners</option>
+                <option value="7">VII — Zigzag Staircase</option>
+                <option value="8">VIII — T-L Combined</option>
+                <option value="9">IX — S-Shape</option>
+              </select>
+            </div>
+          )}
 
           {mode === 'exam' && (
             <div>

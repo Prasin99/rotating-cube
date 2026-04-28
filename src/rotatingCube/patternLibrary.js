@@ -18,13 +18,15 @@
 
 const RAW_PATTERNS = [
   { id: 'I',    numericId: 1, name: 'Classic Cross',
-    cells: [{x:1,y:0},{x:0,y:1},{x:1,y:1},{x:2,y:1},{x:3,y:1},{x:1,y:2}] },
+    // cells: [{x:1,y:0},{x:0,y:1},{x:1,y:1},{x:2,y:1},{x:3,y:1},{x:1,y:2}] },
+    cells: [{x:2,y:0},{x:0,y:1},{x:1,y:1},{x:2,y:1},{x:3,y:1},{x:1,y:2}] },
   { id: 'II',   numericId: 2, name: 'Left T Cross',
     cells: [{x:0,y:0},{x:0,y:1},{x:1,y:1},{x:2,y:1},{x:3,y:1},{x:0,y:2}] },
   { id: 'III',  numericId: 3, name: 'Right-Center T Cross',
     cells: [{x:2,y:0},{x:0,y:1},{x:1,y:1},{x:2,y:1},{x:3,y:1},{x:2,y:2}] },
   { id: 'IV',   numericId: 4, name: 'Offset T',
-    cells: [{x:1,y:0},{x:0,y:1},{x:1,y:1},{x:2,y:1},{x:3,y:1},{x:2,y:2}] },
+    //cells: [{x:1,y:0},{x:0,y:1},{x:1,y:1},{x:2,y:1},{x:3,y:1},{x:2,y:2}] },
+    cells: [{x:1,y:0},{x:0,y:1},{x:1,y:1},{x:2,y:1},{x:3,y:1},{x:0,y:2}] },
   { id: 'V',    numericId: 5, name: 'L-Shape Extended',
     cells: [{x:0,y:0},{x:1,y:0},{x:2,y:0},{x:2,y:1},{x:3,y:1},{x:4,y:1}] },
   { id: 'VI',   numericId: 6, name: 'Diagonal Corners',

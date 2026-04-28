@@ -85,7 +85,17 @@ function mutateCube(baseCube, strategy) {
   return cube;
 }
 
-function generateUniqueTransforms(count) {
+function generateUniqueTransforms(count, forcedLayout = null) {
+  if (forcedLayout) {
+    // Lock to one template; vary rotations across the 4 option slots
+    const rotations = [...ROTATIONS].sort(() => Math.random() - 0.5);
+    return rotations.slice(0, count).map((rotation) => ({
+      layout: forcedLayout,
+      rotation,
+      mirror: 'none',
+      forcedLayout: true,
+    }));
+  }
   const transforms = [];
   const used = new Set();
   let safety = 0;
@@ -104,7 +114,10 @@ function buildWrongOption(trueCube, validSignatures, existingSignatures, preferr
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     let candidate = trueCube;
     for (let r = 0; r < 1 + Math.floor(attempt / 10); r++) candidate = mutateCube(candidate, attempt + r);
-    const layout = attempt < 10 ? preferredTransform.layout : randomLayout();
+    //const layout = attempt < 10 ? preferredTransform.layout : randomLayout();
+    const layout = preferredTransform.forcedLayout
+      ? preferredTransform.layout
+      : (attempt < 10 ? preferredTransform.layout : randomLayout());
     const rotation = attempt < 10 ? preferredTransform.rotation : randomRotation();
     const mirror = attempt < 10 ? preferredTransform.mirror : randomMirror();
     const option = ensureValidPattern(cubeToUnfolded(candidate, layout, rotation, mirror));
@@ -122,10 +135,57 @@ function buildWrongOption(trueCube, validSignatures, existingSignatures, preferr
   return { option, signature: renderedNetSignatureFromUnfolded(option) };
 }
 
-export function generateQuestion() {
+// export function generateQuestion() {
+//   const cube = generateRandomCube();
+//   const validSignatures = computeValidNetSignatures(cube);
+//   const transforms = generateUniqueTransforms(4);
+//   const correctIndex = Math.floor(Math.random() * 4);
+//   const options = new Array(4);
+//   const usedSignatures = new Set();
+
+// export function generateQuestion(options = {}) {
+//   const { forcedLayout = null } = options;
+//   const cube = generateRandomCube();
+//   const validSignatures = computeValidNetSignatures(cube);
+//   const transforms = generateUniqueTransforms(4, forcedLayout);
+
+//   {
+//     const { layout, rotation, mirror } = transforms[correctIndex];
+//     const correct = ensureValidPattern(cubeToUnfolded(cube, layout, rotation, mirror));
+//     const correctSig = renderedNetSignatureFromUnfolded(correct);
+//     if (!validSignatures.has(correctSig)) {
+//       // eslint-disable-next-line no-console
+//       console.error('[rotating-cube] generator/validator drift detected');
+//       const fallback = ensureValidPattern(cubeToUnfolded(cube, 1, 0, 'none'));
+//       options[correctIndex] = fallback;
+//       usedSignatures.add(renderedNetSignatureFromUnfolded(fallback));
+//     } else {
+//       options[correctIndex] = correct;
+//       usedSignatures.add(correctSig);
+//     }
+//   }
+
+//   for (let i = 0; i < 4; i++) {
+//     if (i === correctIndex) continue;
+//     const { option, signature } = buildWrongOption(cube, validSignatures, usedSignatures, transforms[i]);
+//     options[i] = option;
+//     usedSignatures.add(signature);
+//   }
+
+//   return {
+//     id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+//     cube,
+//     correctOptionIndex: correctIndex,
+//     options,
+//   };
+// }
+
+
+export function generateQuestion(opts = {}) {
+  const { forcedLayout = null } = opts;
   const cube = generateRandomCube();
   const validSignatures = computeValidNetSignatures(cube);
-  const transforms = generateUniqueTransforms(4);
+  const transforms = generateUniqueTransforms(4, forcedLayout);
   const correctIndex = Math.floor(Math.random() * 4);
   const options = new Array(4);
   const usedSignatures = new Set();
@@ -161,6 +221,12 @@ export function generateQuestion() {
   };
 }
 
-export function generateQuestions(count) {
-  return Array.from({ length: count }, () => generateQuestion());
+
+
+// export function generateQuestions(count) {
+//   return Array.from({ length: count }, () => generateQuestion());
+// }
+
+export function generateQuestions(count, options = {}) {
+  return Array.from({ length: count }, () => generateQuestion(options));
 }
