@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { RotatingCube3D } from './RotatingCube3D.jsx';
+import { UnfoldedCubeOption } from './UnfoldedCubeOption.jsx';
+import { findCorrectOptionIndex } from './answerValidator.js';
 
 const translations = {
   en: {
@@ -7,6 +10,8 @@ const translations = {
     correct: 'Correct',
     accuracy: 'Accuracy',
     avgTime: 'Avg Time',
+    avgTimePerQuestion: 'Average Time per Question',
+    correctAnswers: 'Correct Answers',
     tryAgain: 'Try Again',
     backToSetup: 'Back to Setup',
     excellent: 'Excellent!',
@@ -14,6 +19,12 @@ const translations = {
     needsWork: 'Keep practicing!',
     difficulty: 'Difficulty',
     mode: 'Mode',
+    breakdown: 'Breakdown',
+    detailedAnalysis: 'Detailed Analysis',
+    legendCorrect: 'Correct answer',
+    legendYourWrong: 'Your incorrect selection',
+    question: 'Question',
+    notAnswered: 'Not answered',
   },
   de: {
     title: 'Ihre Ergebnisse',
@@ -21,6 +32,8 @@ const translations = {
     correct: 'Richtig',
     accuracy: 'Genauigkeit',
     avgTime: 'Durchschn. Zeit',
+    avgTimePerQuestion: 'Durchschnittliche Zeit pro Frage',
+    correctAnswers: 'Richtige Antworten',
     tryAgain: 'Erneut Versuchen',
     backToSetup: 'Zurück zur Einstellung',
     excellent: 'Ausgezeichnet!',
@@ -28,6 +41,12 @@ const translations = {
     needsWork: 'Weiter üben!',
     difficulty: 'Schwierigkeit',
     mode: 'Modus',
+    breakdown: 'Übersicht',
+    detailedAnalysis: 'Detaillierte Analyse',
+    legendCorrect: 'Richtige Antwort',
+    legendYourWrong: 'Ihre falsche Auswahl',
+    question: 'Frage',
+    notAnswered: 'Nicht beantwortet',
   },
 };
 
@@ -43,9 +62,22 @@ export function RotatingCubeSummary({ settings, session, onRestart, onBackToSetu
   const verdict =
     accuracy >= 85 ? t.excellent : accuracy >= 65 ? t.good : t.needsWork;
 
+  const isExam = settings.mode === 'exam';
+
+  // Build a per-question correct-index lookup so the analysis matches
+  // the same source of truth used during training.
+  const correctIndexByQuestion = useMemo(() => {
+    if (!session.questions) return [];
+    return session.questions.map((q) => {
+      const idx = findCorrectOptionIndex(q.options, q.cube);
+      return idx >= 0 ? idx : q.correctOptionIndex;
+    });
+  }, [session.questions]);
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-3xl mx-auto space-y-6">
+        {/* ====== Top results card ====== */}
         <div className="bg-white rounded-lg shadow p-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900">{t.title}</h1>
           <div className="text-5xl font-bold text-blue-600 mt-4">
@@ -73,11 +105,9 @@ export function RotatingCubeSummary({ settings, session, onRestart, onBackToSetu
           </div>
         </div>
 
-        {/* Question-by-question breakdown */}
+        {/* ====== Question-by-question breakdown ====== */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">
-            {settings.locale === 'de' ? 'Übersicht' : 'Breakdown'}
-          </h2>
+          <h2 className="text-lg font-semibold mb-4">{t.breakdown}</h2>
           <div className="space-y-2">
             {session.responses.map((r, i) => (
               <div
@@ -89,7 +119,7 @@ export function RotatingCubeSummary({ settings, session, onRestart, onBackToSetu
                 }`}
               >
                 <span>
-                  {settings.locale === 'de' ? 'Frage' : 'Question'} {i + 1}
+                  {t.question} {i + 1}
                 </span>
                 <span className="font-mono text-sm">
                   {(r.responseTimeMs / 1000).toFixed(1)}s
@@ -102,6 +132,119 @@ export function RotatingCubeSummary({ settings, session, onRestart, onBackToSetu
           </div>
         </div>
 
+        {/* ====== Detailed Analysis (EXAM MODE ONLY) ====== */}
+        {isExam && session.questions && session.questions.length > 0 && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-yellow-600">◎</span>
+              <h2 className="text-lg font-semibold">{t.detailedAnalysis}</h2>
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center gap-6 mb-6 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-4 h-4 border-2 border-green-500 rounded-sm bg-green-50" />
+                <span className="text-gray-700">{t.legendCorrect}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-4 h-4 border-2 border-red-500 rounded-sm bg-red-50" />
+                <span className="text-gray-700">{t.legendYourWrong}</span>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {session.questions.map((q, qIndex) => {
+                const response = session.responses[qIndex];
+                const isCorrect = response?.isCorrect;
+                const selectedIdx = response?.selectedOptionIndex ?? -1;
+                const correctIdx = correctIndexByQuestion[qIndex];
+                const timeS = response
+                  ? (response.responseTimeMs / 1000).toFixed(1)
+                  : '–';
+
+                return (
+                  <div
+                    key={qIndex}
+                    className={`rounded-lg border-l-4 p-4 ${
+                      isCorrect
+                        ? 'border-green-500 bg-green-50/30'
+                        : 'border-red-500 bg-red-50/30'
+                    }`}
+                  >
+                    {/* Question header */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-3 py-1 rounded-full text-white text-sm font-semibold ${
+                            isCorrect ? 'bg-green-600' : 'bg-red-600'
+                          }`}
+                        >
+                          {t.question} {qIndex + 1}
+                        </span>
+                        <span
+                          className={`text-lg ${
+                            isCorrect ? 'text-green-600' : 'text-red-600'
+                          }`}
+                        >
+                          {isCorrect ? '✓' : '✕'}
+                        </span>
+                      </div>
+                      <div className="text-sm font-mono text-gray-600">
+                        ⏱ {timeS}s
+                      </div>
+                    </div>
+
+                    {/* Cube preview */}
+                    <div className="bg-white rounded border border-gray-200 py-4 mb-4 flex justify-center">
+                      <RotatingCube3D
+                        cube={q.cube}
+                        difficulty={settings.difficulty}
+                        size={120}
+                        manualControl={true}
+                      />
+                    </div>
+
+                    {/* Four options A B C D */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {q.options.map((option, oIndex) => {
+                        const letter = ['A', 'B', 'C', 'D'][oIndex] || String(oIndex + 1);
+                        const isThisCorrect = oIndex === correctIdx;
+                        const isThisSelected = oIndex === selectedIdx;
+                        return (
+                          <div key={oIndex} className="flex flex-col items-center gap-1">
+                            <span className="text-sm font-semibold text-gray-700">
+                              {letter}
+                            </span>
+                            <div className="pointer-events-none">
+                              <UnfoldedCubeOption
+                                unfolded={option}
+                                index={oIndex}
+                                selected={isThisSelected}
+                                correct={isThisCorrect}
+                                showResult={true}
+                                onClick={() => {}}
+                                disabled={false}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Caption when user did not answer */}
+                    {selectedIdx === -1 && (
+                      <div className="mt-3 text-sm text-red-600 italic">
+                        {t.notAnswered}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ====== Action buttons ====== */}
         <div className="flex gap-4">
           <button
             onClick={onRestart}

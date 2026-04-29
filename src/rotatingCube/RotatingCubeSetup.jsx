@@ -12,7 +12,8 @@ const translations = {
     mode: 'Mode',
     practice: 'Practice (instant feedback)',
     exam: 'Exam (timed, no feedback)',
-    timePerQuestion: 'Time per question (sec)',
+    totalTime: 'Total time (minutes)',
+    //timePerQuestion: 'Time per question (sec)',
     // locale: 'Language',
     // start: 'Start',
     locale: 'Language',
@@ -31,7 +32,8 @@ const translations = {
     mode: 'Modus',
     practice: 'Übung (sofortiges Feedback)',
     exam: 'Prüfung (mit Zeit, ohne Feedback)',
-    timePerQuestion: 'Zeit pro Frage (Sek.)',
+    totalTime: 'Gesamtzeit (Minuten)',
+    // timePerQuestion: 'Zeit pro Frage (Sek.)',
     // locale: 'Sprache',
     // start: 'Starten',
     locale: 'Sprache',
@@ -45,7 +47,8 @@ export function RotatingCubeSetup({ onStart }) {
   const [difficulty, setDifficulty] = useState('medium');
   const [questionCount, setQuestionCount] = useState(10);
   const [mode, setMode] = useState('practice');
-  const [timePerQuestion, setTimePerQuestion] = useState(30);
+  //const [timePerQuestion, setTimePerQuestion] = useState(30);
+  const [totalTimeMinutes, setTotalTimeMinutes] = useState(30);
   const [locale, setLocale] = useState('en');
   const [selectedTemplate, setSelectedTemplate] = useState('any');
 
@@ -53,15 +56,15 @@ export function RotatingCubeSetup({ onStart }) {
 
   const handleStart = () => {
     onStart({
-      difficulty,
-      questionCount,
-      locale,
-      mode,
-      timePerQuestion,
-      forcedLayout: mode === 'practice' && selectedTemplate !== 'any'
-        ? Number(selectedTemplate)
-        : null,
-    });
+  difficulty,
+  questionCount,
+  locale,
+  mode,
+  totalTimeMinutes,
+  forcedLayout: mode === 'practice' && selectedTemplate !== 'any'
+    ? Number(selectedTemplate)
+    : null,
+});
   };
 
   return (
@@ -169,20 +172,20 @@ export function RotatingCubeSetup({ onStart }) {
           )}
 
           {mode === 'exam' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t.timePerQuestion}
-              </label>
-              <input
-                type="number"
-                min={5}
-                max={120}
-                value={timePerQuestion}
-                onChange={(e) => setTimePerQuestion(Math.max(5, Number(e.target.value) || 5))}
-                className="w-full px-3 py-2 border border-gray-300 rounded"
-              />
-            </div>
-          )}
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      {t.totalTime}
+    </label>
+    <input
+      type="number"
+      min={1}
+      max={180}
+      value={totalTimeMinutes}
+      onChange={(e) => setTotalTimeMinutes(Math.max(1, Number(e.target.value) || 1))}
+      className="w-full px-3 py-2 border border-gray-300 rounded"
+    />
+  </div>
+)}
         </div>
 
         <button

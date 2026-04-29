@@ -49,9 +49,10 @@ export function RotatingCubeTraining({ settings, onComplete, onExit }) {
   const [responses, setResponses] = useState([]);
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
   const [sessionStartTime] = useState(Date.now());
-  const [questionTime, setQuestionTime] = useState(
-    settings.mode === 'exam' ? settings.timePerQuestion : 0
-  );
+  // const [questionTime, setQuestionTime] = useState(
+  //   settings.mode === 'exam' ? settings.timePerQuestion : 0
+  // );
+  const [questionTime, setQuestionTime] = useState(0);
   const [totalSessionTime, setTotalSessionTime] = useState(0);
 
   const answeredRef = useRef(false);
@@ -77,27 +78,35 @@ export function RotatingCubeTraining({ settings, onComplete, onExit }) {
     return () => clearInterval(interval);
   }, []);
 
-  // Question timer
-  useEffect(() => {
-    if (showResult) return;
+  // Question timer (practice mode only — exam mode uses total countdown)
+useEffect(() => {
+  if (showResult) return;
+  if (!isPracticeMode) return;
 
-    const interval = setInterval(() => {
-      if (isPracticeMode) {
-        setQuestionTime((p) => p + 1);
-      } else {
-        setQuestionTime((p) => {
-          if (p <= 1) {
-            handleTimeUp();
-            return settings.timePerQuestion;
-          }
-          return p - 1;
-        });
-      }
-    }, 1000);
+  const interval = setInterval(() => {
+    setQuestionTime((p) => p + 1);
+  }, 1000);
 
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showResult, isPracticeMode, currentIndex]);
+  return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [showResult, isPracticeMode, currentIndex]);
+
+// Exam mode: auto-finish when total time runs out
+const examEndedRef = useRef(false);
+useEffect(() => {
+  if (isPracticeMode || examEndedRef.current) return;
+  const examTotalSeconds = settings.totalTimeMinutes * 60;
+  if (totalSessionTime >= examTotalSeconds) {
+    examEndedRef.current = true;
+    onComplete({
+      questions,
+      responses,
+      startTime: sessionStartTime,
+      endTime: Date.now(),
+    });
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [totalSessionTime, isPracticeMode]);
 
   // Reset answered flag on new question
   useEffect(() => {
@@ -105,26 +114,26 @@ export function RotatingCubeTraining({ settings, onComplete, onExit }) {
   }, [currentIndex]);
 
   const handleTimeUp = () => {
-    if (showResult || answeredRef.current) return;
-    answeredRef.current = true;
+  if (showResult || answeredRef.current) return;
+  answeredRef.current = true;
 
-    const responseTime = Date.now() - questionStartTime;
-    setResponses((prev) => [
-      ...prev,
-      {
-        questionIndex: currentIndex,
-        selectedOptionIndex: -1,
-        isCorrect: false,
-        responseTimeMs: responseTime,
-      },
-    ]);
+  const responseTime = Date.now() - questionStartTime;
 
-    if (!isPracticeMode) {
-      setTimeout(() => handleNext(), 300);
-    } else {
-      setShowResult(true);
-    }
+  const newResponse = {
+    questionIndex: currentIndex,
+    selectedOptionIndex: -1,
+    isCorrect: false,
+    responseTimeMs: responseTime,
   };
+
+  setResponses((prev) => [...prev, newResponse]);
+
+  if (!isPracticeMode) {
+    setTimeout(() => handleNext(newResponse), 300);
+  } else {
+    setShowResult(true);
+  }
+};
 
   const handleSelectOption = (optionIndex) => {
     if (showResult) return;
@@ -132,55 +141,56 @@ export function RotatingCubeTraining({ settings, onComplete, onExit }) {
   };
 
   const handleSubmitAnswer = () => {
-    if (selectedOption === null || showResult || answeredRef.current) return;
-    answeredRef.current = true;
+  if (selectedOption === null || showResult || answeredRef.current) return;
+  answeredRef.current = true;
 
-    // SOURCE OF TRUTH: verify against the 9 templates.
-    const selected = currentQuestion.options[selectedOption];
-    const isCorrect = isValidUnfoldingOfCube(selected, currentQuestion.cube);
+  const selected = currentQuestion.options[selectedOption];
+  const isCorrect = isValidUnfoldingOfCube(selected, currentQuestion.cube);
 
-    const responseTime = Date.now() - questionStartTime;
+  const responseTime = Date.now() - questionStartTime;
 
-    setResponses((prev) => [
-      ...prev,
-      {
-        questionIndex: currentIndex,
-        selectedOptionIndex: selectedOption,
-        isCorrect,
-        responseTimeMs: responseTime,
-      },
-    ]);
-
-    if (isPracticeMode) {
-      setShowResult(true);
-    } else {
-      handleNext();
-    }
+  const newResponse = {
+    questionIndex: currentIndex,
+    selectedOptionIndex: selectedOption,
+    isCorrect,
+    responseTimeMs: responseTime,
   };
 
-  const handleNext = () => {
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex((p) => p + 1);
-      setSelectedOption(null);
-      setShowResult(false);
-      setQuestionStartTime(Date.now());
-      setQuestionTime(isPracticeMode ? 0 : settings.timePerQuestion);
-      setManualControl(false);
+  setResponses((prev) => [...prev, newResponse]);
 
-    } else {
-      onComplete({
-        questions,
-        responses: [
-          ...responses,
-          ...(answeredRef.current && !showResult
-            ? [] // already pushed
-            : []),
-        ],
-        startTime: sessionStartTime,
-        endTime: Date.now(),
-      });
-    }
-  };
+  if (isPracticeMode) {
+    setShowResult(true);
+  } else {
+    handleNext(newResponse);
+  }
+};
+
+  const handleNext = (pendingResponse = null) => {
+  if (currentIndex < questions.length - 1) {
+    setCurrentIndex((p) => p + 1);
+    setSelectedOption(null);
+    setShowResult(false);
+    setQuestionStartTime(Date.now());
+    //setQuestionTime(isPracticeMode ? 0 : settings.timePerQuestion);
+    setQuestionTime(0);
+    setManualControl(false);
+  } else {
+    // On the last question the just-recorded response may not yet have
+    // flushed into `responses` state (React batches setResponses). If the
+    // caller passed it explicitly, append it here so onComplete sees the
+    // full set.
+    const finalResponses = pendingResponse
+      ? [...responses, pendingResponse]
+      : responses;
+
+    onComplete({
+      questions,
+      responses: finalResponses,
+      startTime: sessionStartTime,
+      endTime: Date.now(),
+    });
+  }
+};
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -220,13 +230,27 @@ export function RotatingCubeTraining({ settings, onComplete, onExit }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="text-sm font-mono bg-gray-200 px-3 py-1 rounded">
-              ⏱ {formatTime(questionTime)}
-            </div>
-            <div className="text-sm font-mono bg-blue-100 px-3 py-1 rounded">
-              {t.totalTime}: {formatTime(totalSessionTime)}
-            </div>
-          </div>
+  {isPracticeMode && (
+    <div className="text-sm font-mono bg-gray-200 px-3 py-1 rounded">
+      ⏱ {formatTime(questionTime)}
+    </div>
+  )}
+  <div
+    className={`text-sm font-mono px-3 py-1 rounded ${
+      !isPracticeMode &&
+      settings.totalTimeMinutes * 60 - totalSessionTime <= 60
+        ? 'bg-red-100 text-red-700'
+        : 'bg-blue-100'
+    }`}
+  >
+    {t.totalTime}:{' '}
+    {formatTime(
+      isPracticeMode
+        ? totalSessionTime
+        : Math.max(0, settings.totalTimeMinutes * 60 - totalSessionTime)
+    )}
+  </div>
+</div>
         </div>
 
         {/* Main content */}
@@ -299,11 +323,11 @@ export function RotatingCubeTraining({ settings, onComplete, onExit }) {
                 )}
               </div>
               <button
-                onClick={handleNext}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                {isLastQuestion ? t.finish : t.next} →
-              </button>
+  onClick={() => handleNext()}
+  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+>
+  {isLastQuestion ? t.finish : t.next} →
+</button>
             </div>
           </div>
         )}
